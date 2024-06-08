@@ -1,4 +1,6 @@
+using diary_back;
 using diary_back.Context;
+using diary_back.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -29,9 +31,27 @@ builder.Services.AddAuthentication(x =>
     };
 });
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddDbContext<DataContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("WebApiDatabase")));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantService, TenantService>();
 
+builder.Services.AddDbContext<DataContext>((serviceProvider, options) =>
+{
+    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+    var tenantService = serviceProvider.GetRequiredService<ITenantService>();
+    var tenantId = httpContextAccessor.HttpContext.Items["TenantId"]?.ToString();
+
+    if (!string.IsNullOrEmpty(tenantId))
+    {
+        var connectionString = tenantService.GetConnectionString(tenantId);
+        options.UseNpgsql(connectionString);
+    }
+    else
+    {
+        throw new Exception("Tenant ID not found.");
+    }
+});
+
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -52,6 +72,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<TenantMiddleware>();
 
 app.UseHttpsRedirection();
 
