@@ -2,6 +2,10 @@
 using diary_back.Context;
 using Microsoft.EntityFrameworkCore;
 using diary_back.DTO;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 public class UserService : IUserService
 {
@@ -40,18 +44,28 @@ public class UserService : IUserService
 
     public async Task<Diaryentry> AddDiaryEntry(int userId, DiaryEntryDto diaryEntryDto)
     {
-        var newEntry = new Diaryentry
+        try
         {
-            Text = diaryEntryDto.Text,
-            UserEmotionId = diaryEntryDto.UserEmotionId,
-            AiEmotionId = diaryEntryDto.AiEmotionId,
-            User = userId
-        };
+            //var date = diaryEntryDto.Date ?? DateTime.UtcNow.Date; 
 
-        _context.Diaryentries.Add(newEntry);
-        await _context.SaveChangesAsync();
+            var newEntry = new Diaryentry
+            {
+                Text = diaryEntryDto.Text,
+                UserEmotionId = diaryEntryDto.UserEmotionId,
+                AiEmotionId = diaryEntryDto.AiEmotionId,
+                User = userId,
+                Date = diaryEntryDto.Date.HasValue ? diaryEntryDto.Date.Value.ToUniversalTime() : null
+            };
 
-        return newEntry;
+            _context.Diaryentries.Add(newEntry);
+            await _context.SaveChangesAsync();
+
+            return newEntry;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error adding diary entry", ex);
+        }
     }
 
     public IEnumerable<User> GetAllUsers()

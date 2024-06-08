@@ -58,6 +58,9 @@ public class UserController : ControllerBase
     public async Task<IActionResult> AddDiaryEntry([FromBody] DiaryEntryDto diaryEntryDto)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        var date = diaryEntryDto.Date?.Date ?? DateTime.UtcNow.Date;
+
         var newEntry = await _userService.AddDiaryEntry(userId, diaryEntryDto);
         return Ok(newEntry);
     }

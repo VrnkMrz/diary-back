@@ -15,9 +15,11 @@ public partial class Diaryentry
 
     public int User { get; set; }
 
+    public DateTime? Date { get; set; }
+
     public virtual Emotion? AiEmotion { get; set; }
 
     public virtual Emotion? UserEmotion { get; set; }
 
-    public virtual User UserNavigation { get; set; } = null!;
+    public virtual User UserNavigation { get; set; }
 }
